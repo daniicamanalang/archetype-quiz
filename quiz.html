@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motivated vs Disciplined — Find Your Archetype</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+  .card{background:#fff;border-radius:16px;padding:2rem 1.75rem;max-width:620px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+  .prog-bg{background:#EEEDFE;border-radius:99px;height:5px;margin-bottom:1.75rem}
+  .prog-fill{background:#7F77DD;border-radius:99px;height:5px;transition:width 0.4s ease}
+  .q-label{font-size:11px;color:#888;margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase}
+  .q-angle{font-size:11px;color:#aaa;margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase;font-style:italic}
+  .q-text{font-size:17px;font-weight:500;color:#1a1a1a;line-height:1.55;margin-bottom:1.5rem}
+  .options{display:flex;flex-direction:column;gap:9px}
+  .opt{background:#fff;border:1px solid #e0dfe0;border-radius:12px;padding:13px 16px;font-size:14px;color:#1a1a1a;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;line-height:1.5;width:100%;font-family:inherit}
+  .opt:hover{border-color:#7F77DD;background:#f9f8ff}
+  .opt.sel{border:2px solid #7F77DD;background:#EEEDFE;color:#3C3489}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem}
+  .btn{background:transparent;border:1px solid #e0dfe0;border-radius:8px;padding:8px 20px;font-size:13px;color:#444;cursor:pointer;font-family:inherit}
+  .btn:hover{background:#f5f4f0}
+  .btn.pri{background:#7F77DD;color:#fff;border-color:#7F77DD}
+  .btn.pri:hover{background:#534AB7;border-color:#534AB7}
+  .btn:disabled{opacity:.3;cursor:not-allowed}
+  .badge{display:inline-block;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:500;margin-bottom:10px}
+  .arch-name{font-size:22px;font-weight:500;color:#1a1a1a;margin-bottom:5px}
+  .arch-sub{font-size:13px;color:#666;margin-bottom:1.1rem;font-style:italic}
+  .arch-desc{font-size:14px;color:#1a1a1a;line-height:1.7;margin-bottom:1.1rem}
+  .traits{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1.1rem}
+  .trait{font-size:12px;padding:3px 11px;border-radius:99px;border:1px solid #e0dfe0;color:#666}
+  .edge-box{background:#f5f4f0;border-radius:12px;padding:13px 16px;margin-bottom:1.25rem}
+  .edge-label{font-size:11px;color:#aaa;letter-spacing:.05em;margin-bottom:4px;text-transform:uppercase}
+  .edge-text{font-size:13px;color:#1a1a1a;line-height:1.6}
+  .score-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .score-label{font-size:12px;color:#666;width:100px;flex-shrink:0}
+  .score-track{flex:1;background:#f0efe8;border-radius:99px;height:7px}
+  .score-fill{height:7px;border-radius:99px}
+  .divider{border:none;border-top:1px solid #efefef;margin:1.1rem 0}
+  .restart{background:transparent;border:1px solid #e0dfe0;border-radius:8px;padding:8px 20px;font-size:13px;color:#666;cursor:pointer;font-family:inherit}
+  .restart:hover{background:#f5f4f0}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div id="quiz">
+    <div class="prog-bg"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+    <div class="q-label" id="qlabel">Question 1 of 6</div>
+    <div class="q-angle" id="qangle"></div>
+    <div class="q-text" id="qtext"></div>
+    <div class="options" id="opts"></div>
+    <div class="nav">
+      <button class="btn" id="back" onclick="goBack()" disabled>Back</button>
+      <button class="btn pri" id="next" onclick="goNext()" disabled>Next</button>
+    </div>
+  </div>
+  <div id="result" style="display:none"></div>
+</div>
+
+<script>
+const Qs=[
+  {
+    angle:"How you start something",
+    text:"You want to learn a new skill — a tool, a framework, something for your own growth. What actually happens in the first week?",
+    opts:[
+      {t:"I carve out time in my week immediately and start, even if the setup isn't perfect yet",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"I dive in hard — tutorials, practice, the works — then hit a wall and go quiet",s:{machine:0,sprinter:3,waiter:0}},
+      {t:"I research the best way to learn it first. Starting without a plan feels wasteful",s:{machine:0,sprinter:0,waiter:3}},
+      {t:"I start when something at work forces me to actually use it",s:{machine:0,sprinter:2,waiter:1}}
+    ]
+  },
+  {
+    angle:"How you keep a habit",
+    text:"You commit to doing something every day for a month — exercise, journaling, reading, whatever. Pick one. By day 12, what's the honest status?",
+    opts:[
+      {t:"Still going. I haven't missed a day — I built it into my routine from the start",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"I was on fire for the first five days, then it fell apart. I'll restart next Monday",s:{machine:0,sprinter:3,waiter:0}},
+      {t:"I'm doing it some days but not others — it depends on how I feel",s:{machine:0,sprinter:1,waiter:2}},
+      {t:"I haven't really started yet. I keep meaning to set it up properly first",s:{machine:0,sprinter:0,waiter:3}}
+    ]
+  },
+  {
+    angle:"How you handle energy + recovery",
+    text:"It's been a heavy week. You're drained. Something non-urgent but important is still on your list. What do you do?",
+    opts:[
+      {t:"I do it anyway — it's on the list, it gets done. Rest comes after",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"I leave it. I know I'll make up for it later when I have more gas in the tank",s:{machine:0,sprinter:3,waiter:0}},
+      {t:"I tell myself I'll tackle it once I feel more like myself again",s:{machine:0,sprinter:0,waiter:3}},
+      {t:"I do a lighter version of it — something is better than nothing",s:{machine:2,sprinter:1,waiter:0}}
+    ]
+  },
+  {
+    angle:"How you react when things go off-plan",
+    text:"You had a productive streak going — then life happened. A bad week, a disruption, you broke the streak. What comes next?",
+    opts:[
+      {t:"I reset the next day. A disruption doesn't erase the system, I just re-enter it",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"I use the disruption as a reset — I'll come back harder when the timing feels right",s:{machine:0,sprinter:2,waiter:1}},
+      {t:"The streak breaking hits me hard. I end up waiting until I feel motivated again to restart",s:{machine:0,sprinter:0,waiter:3}},
+      {t:"I bounce back fast if there's something urgent pushing me, otherwise it takes a while",s:{machine:0,sprinter:3,waiter:0}}
+    ]
+  },
+  {
+    angle:"What drives your output",
+    text:"Look back at the last thing you're genuinely proud of finishing. What actually got it done?",
+    opts:[
+      {t:"I had a system. I worked it consistently until it was complete",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"A deadline, external pressure, or a sudden burst of energy at the end",s:{machine:0,sprinter:3,waiter:0}},
+      {t:"It finally felt like the right time — everything clicked and I moved on it",s:{machine:0,sprinter:0,waiter:3}},
+      {t:"A mix — I did bits of it over time whenever I had the drive",s:{machine:1,sprinter:1,waiter:1}}
+    ]
+  },
+  {
+    angle:"How you talk to yourself",
+    text:"You've been meaning to do something for weeks and still haven't. What's the story you're telling yourself?",
+    opts:[
+      {t:"Honestly, if I haven't done it by now it probably wasn't a real priority — I'd have scheduled it",s:{machine:3,sprinter:0,waiter:0}},
+      {t:"I'll get to it. I just need the right trigger — pressure, inspiration, something to light me up",s:{machine:0,sprinter:3,waiter:0}},
+      {t:"I'm waiting until I can do it properly. Half-doing it feels worse than not doing it at all",s:{machine:0,sprinter:0,waiter:3}},
+      {t:"I feel guilty about it, make a vague promise to myself, and push it to next week",s:{machine:0,sprinter:1,waiter:2}}
+    ]
+  }
+];
+
+const archetypes={
+  machine:{
+    name:"The Machine",
+    sub:"Discipline is your default setting.",
+    badge:"Highly disciplined",
+    badgeBg:"#EEEDFE",badgeColor:"#3C3489",
+    icon:"⚙️",
+    desc:"You don't need to feel ready to show up. Consistency is your identity, not a strategy. You've built your life around systems and they work — and your team probably notices. The challenge? Sometimes the machine runs even when it should rest.",
+    traits:["Reliable","System-driven","High output","Structured"],
+    edge:"Your growth edge: let yourself be moved sometimes. Motivation isn't weakness — it's signal. Learn to tell the difference between resistance worth pushing through and resistance worth listening to.",
+    color:"#7F77DD"
+  },
+  sprinter:{
+    name:"The Sprinter",
+    sub:"You run fast when it matters — then need recovery.",
+    badge:"Burst-driven",
+    badgeBg:"#FAECE7",badgeColor:"#712B13",
+    icon:"⚡",
+    desc:"You operate in high-energy bursts. When you're in, you're really in — fast, creative, focused. When you're out, nothing moves. You've probably done your best work in short intense windows. The gap is what happens between those sprints.",
+    traits:["High-intensity","Deadline-powered","Creative peaks","Needs recovery"],
+    edge:"Your growth edge: build a bridge between sprints. Small boring daily actions compound into the conditions that make your bursts even better. You don't have to grind — just don't fully stop.",
+    color:"#D85A30"
+  },
+  waiter:{
+    name:"The Waiter",
+    sub:"You're waiting for the right moment. It won't come.",
+    badge:"Motivation-dependent",
+    badgeBg:"#FAEEDA",badgeColor:"#633806",
+    icon:"⏳",
+    desc:"You know what you want to do. You even know how. But you're waiting until you feel like it. The uncomfortable truth? That feeling doesn't come before you start — it comes after. You're not lazy. You're running on the wrong fuel.",
+    traits:["Self-aware","High standards","Perfection-prone","Overthinks starting"],
+    edge:"Your growth edge: shrink the first step until it's embarrassingly small. You don't need motivation to open the doc, write one line, or send one message. Action first. Feeling follows.",
+    color:"#BA7517"
+  }
+};
+
+let cur=0,answers=new Array(Qs.length).fill(null);
+
+function render(){
+  const q=Qs[cur];
+  document.getElementById('qlabel').textContent=`Question ${cur+1} of ${Qs.length}`;
+  document.getElementById('qangle').textContent=q.angle;
+  document.getElementById('qtext').textContent=q.text;
+  document.getElementById('prog').style.width=`${(cur/Qs.length)*100}%`;
+  const o=document.getElementById('opts');
+  o.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'+(answers[cur]===i?' sel':'');
+    b.textContent=opt.t;
+    b.onclick=()=>{answers[cur]=i;render()};
+    o.appendChild(b);
+  });
+  document.getElementById('back').disabled=cur===0;
+  document.getElementById('next').disabled=answers[cur]===null;
+  document.getElementById('next').textContent=cur===Qs.length-1?'See my archetype':'Next';
+}
+
+function goBack(){if(cur>0){cur--;render()}}
+function goNext(){
+  if(answers[cur]===null)return;
+  if(cur<Qs.length-1){cur++;render();}
+  else showResult();
+}
+
+function showResult(){
+  const totals={machine:0,sprinter:0,waiter:0};
+  Qs.forEach((q,qi)=>{
+    const chosen=q.opts[answers[qi]];
+    if(chosen)Object.entries(chosen.s).forEach(([k,v])=>totals[k]+=v);
+  });
+  const winner=Object.entries(totals).sort((a,b)=>b[1]-a[1])[0][0];
+  const a=archetypes[winner];
+  document.getElementById('quiz').style.display='none';
+  const r=document.getElementById('result');
+  r.style.display='block';
+  const max=Math.max(...Object.values(totals))||1;
+  const labels={machine:'The Machine',sprinter:'The Sprinter',waiter:'The Waiter'};
+  const bars=Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const pct=Math.round((v/max)*100);
+    return `<div class="score-row"><span class="score-label">${labels[k]}</span><div class="score-track"><div class="score-fill" style="width:${pct}%;background:${archetypes[k].color}"></div></div></div>`;
+  }).join('');
+  const traits=a.traits.map(t=>`<span class="trait">${t}</span>`).join('');
+  r.innerHTML=`
+    <div style="font-size:36px;margin-bottom:9px">${a.icon}</div>
+    <div class="badge" style="background:${a.badgeBg};color:${a.badgeColor}">${a.badge}</div>
+    <div class="arch-name">${a.name}</div>
+    <div class="arch-sub">${a.sub}</div>
+    <div class="arch-desc">${a.desc}</div>
+    <div class="traits">${traits}</div>
+    <div class="edge-box">
+      <div class="edge-label">Your growth edge</div>
+      <div class="edge-text">${a.edge}</div>
+    </div>
+    <hr class="divider">
+    <div style="font-size:12px;color:#aaa;margin-bottom:9px;letter-spacing:.04em;text-transform:uppercase">How you scored</div>
+    ${bars}
+    <hr class="divider">
+    <button class="restart" onclick="restart()">Retake quiz</button>
+  `;
+}
+
+function restart(){
+  cur=0;answers=new Array(Qs.length).fill(null);
+  document.getElementById('result').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  render();
+}
+render();
+</script>
+</body>
+</html>
